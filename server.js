@@ -109,9 +109,10 @@ function match(job) {
 }
 async function body(req) { let data = ''; for await (const chunk of req) data += chunk; return data ? JSON.parse(data) : {}; }
 function serveFile(req, res) {
-  let file = req.url === '/' ? '/index.html' : decodeURIComponent(req.url.split('?')[0]);
-  const target = path.normalize(path.join(root, file));
-  if (!target.startsWith(root) || !fs.existsSync(target) || fs.statSync(target).isDirectory()) return json(res, 404, { error: 'Not found' });
+  const pathname = decodeURIComponent((req.url || '/').split('?')[0] || '/');
+  const file = pathname === '/' ? 'index.html' : pathname.replace(/^[/\\]+/, '');
+  const target = path.resolve(root, file);
+  if ((target !== root && !target.startsWith(`${root}${path.sep}`)) || !fs.existsSync(target) || fs.statSync(target).isDirectory()) return json(res, 404, { error: 'Not found' });
   res.writeHead(200, { 'Content-Type': publicTypes[path.extname(target)] || 'application/octet-stream' }); fs.createReadStream(target).pipe(res);
 }
 const server = http.createServer(async (req, res) => {
