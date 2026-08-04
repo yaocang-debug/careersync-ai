@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareerSync AI — Admin Console</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="profile.css" />
+  </head>
+  <body>
+    <main class="admin-view active">
+      <div class="admin-shell">
+        <header class="topbar admin-topbar">
+          <a class="brand" href="index.html"><span class="brand-mark">↗</span> CareerSync <em>AI</em></a>
+          <div><span class="admin-pill">● Platform administrator</span><a class="back-link" href="index.html">Open user portal →</a></div>
+        </header>
+        <header class="dash-header admin-heading">
+          <div><p class="eyebrow">PLATFORM ADMINISTRATION</p><h1>Control centre</h1><p class="admin-subtitle">Review companies, job listings, applications, and system activity.</p></div><button class="primary" id="admin-ai-open">✦ Ask Admin Copilot</button>
+        </header>
+        <nav class="admin-nav" aria-label="Admin sections"><button class="active" data-admin-tab="overview">Overview</button><button data-admin-tab="verification">Verification queue</button><button data-admin-tab="jobs">Job moderation</button><button data-admin-tab="applications">Applications</button><button data-admin-tab="interviews">Interviews</button><button data-admin-tab="users">Users</button><button data-admin-tab="audit">Audit log</button></nav>
+        <div class="admin-toolbar"><label>Search records<input id="admin-search" type="search" placeholder="Company, job, or event..." /></label><label>Status filter<select id="admin-status-filter"><option value="all">All statuses</option><option value="pending">Pending</option><option value="verified">Verified</option><option value="published">Published</option><option value="closed">Closed</option><option value="suspended">Suspended</option></select></label><span class="admin-toolbar-note">Changes are recorded in the audit log.</span></div>
+        <div id="admin-content"></div>
+      </div>
+    </main>
+    <div class="toast" role="status" aria-live="polite"></div>
+    <dialog id="admin-ai-dialog"><section class="assistant-box"><div class="modal-head"><div><p class="eyebrow">CAREERSYNC AI</p><h2>Admin Copilot</h2></div><button id="admin-ai-close" aria-label="Close">×</button></div><div id="admin-ai-messages" class="assistant-messages"><div class="assistant-message bot">Ask me about moderation priorities, audit activity, or platform metrics.</div></div><form id="admin-ai-form" class="assistant-form"><input required placeholder="Ask an admin question..." /><button class="primary">Send</button></form></section></dialog>
+    <script src="admin.js"></script>
+  </body>
+</html>

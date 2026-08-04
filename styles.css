@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
+
+:root { --ink:#17242d; --muted:#71807d; --line:#e3e9e6; --paper:#f4f7f5; --white:#fff; --lime:#d8f657; --green:#287660; --teal:#263f42; --soft-green:#edf6e8; --purple:#e8e2fb; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.45 "DM Sans", Arial, sans-serif; }
+button, input, select, textarea { font:inherit; }
+button { cursor:pointer; }
+h1,h2,h3,p { margin-top:0; }
+
+/* Global header */
+.topbar { height:76px; display:flex; align-items:center; justify-content:space-between; gap:18px; padding:0 clamp(18px,6vw,80px); background:var(--white); border-bottom:1px solid var(--line); }
+.brand { color:var(--ink); text-decoration:none; font:800 20px "Plus Jakarta Sans", sans-serif; letter-spacing:-1px; white-space:nowrap; }
+.brand em { color:var(--green); font-style:normal; }
+.brand-mark { display:inline-grid; width:27px; height:27px; place-items:center; margin-right:6px; border-radius:9px; background:var(--lime); font-size:20px; }
+.mode-switch { display:flex; gap:3px; padding:4px; overflow:auto; border-radius:11px; background:#edf1ee; }
+.mode { border:0; border-radius:8px; padding:8px 13px; color:#64716f; background:transparent; font-size:13px; font-weight:700; white-space:nowrap; }
+.mode.active { color:var(--ink); background:var(--white); box-shadow:0 1px 4px #94a29a55; }
+.avatar { width:38px; height:38px; border:0; border-radius:50%; color:#fff; background:var(--teal); font-weight:700; }
+.register-link { border:1px solid #b7d7c4; border-radius:8px; padding:8px 11px; color:var(--green); background:#f5fbf5; font-size:12px; font-weight:700; }
+.view { display:none; }
+.view.active { display:flex; }
+.eyebrow { margin-bottom:8px; color:#84918e; font-size:10px; font-weight:800; letter-spacing:1.3px; }
+
+/* Employee app */
+#employee { max-width:1000px; align-items:center; gap:110px; margin:54px auto; padding:0 20px; }
+.phone-frame { position:relative; width:390px; height:760px; overflow:hidden; border:10px solid #20343a; border-radius:42px; background:var(--white); box-shadow:0 24px 60px #33554c35; }
+.mobile-header { height:38px; display:flex; justify-content:space-between; padding:12px 20px 0; font-size:11px; font-weight:700; }
+.mobile-content { height:712px; overflow:auto; padding:9px 20px 90px; }
+.hello { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.hello h1, .dash-header h1 { margin:0; font:800 26px/1.17 "Plus Jakarta Sans",sans-serif; letter-spacing:-1.2px; }
+.hello h1 span { color:#8cac26; }
+.hello p, .mobile-notes > p { margin:7px 0 0; color:var(--muted); font-size:13px; }
+.portrait { display:grid; width:44px; height:44px; flex:0 0 44px; place-items:center; border-radius:50%; color:#fff; background:linear-gradient(145deg,#ed9d77,#72344b); font-weight:800; }
+.career-score { display:flex; align-items:center; justify-content:space-between; margin:22px 0; padding:18px; border-radius:17px; color:#fff; background:var(--teal); }
+.career-score p { margin:0; color:#c7d3cf; font-size:10px; font-weight:700; letter-spacing:1px; }
+.career-score strong { display:block; font:800 29px "Plus Jakarta Sans",sans-serif; }
+.career-score strong span { color:#b7c7c2; font-size:12px; }
+.career-score small { display:block; color:var(--lime); font-size:11px; }
+.ring { display:grid; width:59px; height:59px; place-items:center; border:6px solid var(--lime); border-left-color:#617979; border-radius:50%; font-size:13px; }
+.section-title,.panel-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.section-title h2,.panel h2 { margin:0; font:800 16px "Plus Jakarta Sans",sans-serif; letter-spacing:-.5px; }
+.category-filter { max-width:165px; border:1px solid var(--line); border-radius:7px; padding:7px; color:#536360; background:#fff; font-size:11px; }
+.section-title button,.panel-head > button { border:0; color:var(--green); background:transparent; font-size:12px; font-weight:700; }
+.job-card { display:flex; align-items:flex-start; gap:11px; margin:10px 0; padding:13px; border:1px solid var(--line); border-radius:14px; background:var(--white); }
+.company-logo { display:grid; width:39px; height:39px; flex:0 0 39px; place-items:center; border-radius:11px; font-size:17px; font-weight:800; }
+.lime { background:#e4f89b; }.purple { background:var(--purple); color:#6854d6; }.orange { background:#ffe3cb; }.teal { background:#d5f3eb; }
+.job-content,.candidate-info { min-width:0; flex:1; }
+.match { color:#648b17; font-size:9px; font-weight:800; letter-spacing:.7px; }
+.job-content h3,.candidate h3 { margin:3px 0; font:700 14px "Plus Jakarta Sans",sans-serif; }
+.job-content p,.candidate p { margin:2px 0 8px; color:var(--muted); font-size:11px; }
+.tags,.skills { display:flex; flex-wrap:wrap; gap:5px; }
+.tags span,.skills span { padding:3px 6px; border-radius:5px; color:#62706d; background:#f0f4f2; font-size:9px; font-weight:700; }
+.job-content details { margin-top:8px; color:#527169; font-size:10px; }.job-content summary { color:var(--green); cursor:pointer; font-weight:700; }.job-content ul { margin:5px 0 0; padding-left:15px; }
+.apply { align-self:center; border:0; border-radius:7px; padding:7px 9px; color:#fff; background:#315d52; font-size:10px; font-weight:700; }.apply:disabled,.apply.done { color:#478062; background:#e7efe8; }
+.bottom-nav { position:absolute; right:0; bottom:0; left:0; display:flex; height:66px; justify-content:space-around; border-top:1px solid var(--line); background:var(--white); }
+.bottom-nav button { width:50%; border:0; color:#82908d; background:transparent; font-size:20px; }.bottom-nav span { display:block; font-size:9px; }.bottom-nav .nav-active { color:var(--green); }
+.mobile-notes { width:335px; }.mobile-notes h2 { margin:0; font:800 35px/1.12 "Plus Jakarta Sans",sans-serif; letter-spacing:-1.6px; }.mobile-notes > p { font-size:16px; line-height:1.65; }.feature-list { display:grid; gap:13px; margin-top:26px; color:#41514e; font-weight:700; }.feature-list span { padding-bottom:13px; border-bottom:1px solid var(--line); }
+
+/* Employer dashboard */
+.employer-view { min-height:calc(100vh - 76px); background:#f7f9f8; }.sidebar { display:flex; width:235px; min-height:calc(100vh - 76px); flex-direction:column; padding:29px 20px; border-right:1px solid var(--line); background:var(--white); }.sidebar .brand { font-size:18px; }.workspace { margin:44px 10px 12px; color:#9aa5a1; font-size:9px; font-weight:700; letter-spacing:1px; }.sidebar nav { display:grid; gap:4px; }.sidebar nav button { border:0; border-radius:8px; padding:11px; text-align:left; color:#60706c; background:transparent; font-weight:700; }.sidebar nav .side-active { color:var(--green); background:#eaf4e7; }.sidebar-bottom { margin-top:auto; }.team { display:flex; align-items:center; gap:9px; padding-top:17px; border-top:1px solid var(--line); }.team > span { border-radius:9px; padding:8px; background:#eaf5ca; font-size:11px; font-weight:800; }.team strong,.team small { display:block; font-size:11px; }.team small { margin-top:3px; color:var(--green); }
+.dashboard { width:calc(100% - 235px); padding:38px clamp(25px,5vw,72px); }.dash-header { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px; }.header-actions { display:flex; gap:9px; }.primary,.outline { border-radius:8px; padding:10px 13px; font-size:12px; font-weight:700; }.primary { border:1px solid #315d52; color:#fff; background:#315d52; }.outline { border:1px solid #dbe3df; color:#536360; background:#fff; }
+.metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }.metrics article,.panel { padding:18px; border:1px solid var(--line); border-radius:13px; background:var(--white); }.metrics p { margin:0 0 12px; color:var(--muted); font-size:12px; }.metrics strong { font:800 25px "Plus Jakarta Sans",sans-serif; letter-spacing:-1px; }.metrics strong small { color:#7c8886; font-size:13px; }.metrics span { display:block; margin-top:8px; font-size:10px; }.positive,.verified { color:var(--green); }.trust { color:#487b77; }
+.dashboard-grid { display:grid; grid-template-columns:minmax(480px,1.65fr) minmax(240px,.85fr); gap:16px; margin-top:16px; }.panel-head p { margin:5px 0 0; color:var(--muted); font-size:11px; }.candidate { display:flex; align-items:center; gap:11px; padding:16px 0; border-bottom:1px solid var(--line); }.candidate:last-child { border-bottom:0; }.candidate-avatar { display:grid; width:40px; height:40px; flex:0 0 40px; place-items:center; border-radius:50%; font-size:11px; font-weight:800; }.score { text-align:right; }.score strong { display:block; color:var(--green); font:800 16px "Plus Jakarta Sans",sans-serif; }.score small { color:var(--muted); font-size:10px; }.review { min-width:94px; border:1px solid #dbe3df; border-radius:7px; padding:7px; color:#455451; background:#fff; font-size:11px; font-weight:700; }.right-stack,.admin-sections { display:grid; gap:16px; }.insight { color:#fff; background:var(--teal); }.insight .eyebrow { color:#c2d0ca; }.insight h3 { font:700 16px "Plus Jakarta Sans",sans-serif; }.insight p { color:#d3dfdc; font-size:12px; }.trust-score { display:flex; align-items:center; gap:13px; margin:20px 0; }.trust-score strong { font:800 34px "Plus Jakarta Sans",sans-serif; }.stars { color:#e2b440; letter-spacing:2px; }.trust-score p { margin:4px 0; color:var(--muted); font-size:10px; }.trust-row { display:flex; justify-content:space-between; padding:11px 0; border-top:1px solid var(--line); color:#6b7875; font-size:11px; }.trust-row b { color:var(--green); }.ethical-note { margin:14px 2px; color:#84908d; font-size:10px; }
+.schedule { border:1px solid #b9dcca; border-radius:7px; padding:7px 9px; color:var(--green); background:#f2faf2; font-size:11px; font-weight:700; }.form-note { margin:0; padding:10px; border-radius:8px; color:#41625a; background:#edf6e8; font-size:12px; }
+.interview-card { margin-top:13px; padding:16px; border:1px solid #d6e5db; border-radius:12px; background:#fbfefb; }.interview-card.due { border-color:#d5bb72; background:#fffae8; }.interview-card h3 { margin:7px 0 3px; font:700 15px "Plus Jakarta Sans",sans-serif; }.interview-card p { margin:4px 0; color:#667572; font-size:12px; }.reminder-label { color:#6c7e23; font-size:9px; font-weight:800; letter-spacing:.8px; }.meeting-link { display:inline-block; margin-top:10px; border-radius:7px; padding:7px 10px; color:#fff; background:var(--green); font-size:11px; font-weight:700; text-decoration:none; }
+
+/* Admin */
+.admin-view { min-height:calc(100vh - 76px); padding:40px clamp(20px,6vw,86px); }.admin-view.active { display:block; }.admin-shell { max-width:1180px; margin:auto; }.admin-subtitle { margin:8px 0 0; color:var(--muted); }.admin-pill { border-radius:20px; padding:7px 11px; color:#5069ad; background:#e8eefb; font-size:11px; font-weight:700; }.admin-grid { display:grid; grid-template-columns:1.5fr 1fr; gap:17px; margin-top:18px; }.admin-grid .panel { overflow:auto; }.admin-table { width:100%; border-collapse:collapse; font-size:12px; }.admin-table th { padding:0 8px 9px; text-align:left; color:#86918f; font-size:10px; letter-spacing:.7px; }.admin-table td { padding:11px 8px; border-top:1px solid var(--line); color:#4a5755; }.admin-table select { border:1px solid #dbe3df; border-radius:6px; padding:5px; background:#fff; font-size:11px; }.audit-list { margin:0; padding:0; list-style:none; }.audit-list li { padding:10px 0; border-top:1px solid var(--line); font-size:12px; }.audit-list small { display:block; margin-top:3px; color:var(--muted); }.empty,.loading,.error { padding:24px 5px; color:var(--muted); text-align:center; }.empty h3 { margin:0 0 5px; color:var(--ink); font:700 15px "Plus Jakarta Sans",sans-serif; }.error { color:#ae4d47; }
+.admin-topbar { padding:0; border:0; background:transparent; }.admin-topbar > div { display:flex; align-items:center; gap:14px; }.back-link { color:var(--green); font-size:12px; font-weight:700; text-decoration:none; }.admin-heading { margin:44px 0 28px; }
+
+/* Dialog and notifications */
+.toast { position:fixed; bottom:28px; left:50%; z-index:5; padding:11px 16px; border-radius:9px; transform:translate(-50%,20px); color:#fff; background:var(--teal); box-shadow:0 8px 25px #10242144; opacity:0; pointer-events:none; transition:.25s; }.toast.show { transform:translate(-50%,0); opacity:1; }dialog { width:min(490px,calc(100vw - 30px)); padding:0; border:0; border-radius:15px; box-shadow:0 25px 80px #16232455; }dialog::backdrop { background:#16232488; }#job-form { display:grid; gap:13px; padding:23px; }#job-form label { display:grid; gap:6px; color:#43514e; font-size:12px; font-weight:700; }#job-form small { color:var(--muted); font-weight:400; }#job-form input,#job-form textarea,#job-form select { border:1px solid #d8dfdc; border-radius:7px; padding:10px; color:var(--ink); background:#fff; }#job-form textarea { height:78px; resize:vertical; }.modal-head { display:flex; align-items:center; justify-content:space-between; }.modal-head h2 { margin:0; font:800 19px "Plus Jakarta Sans",sans-serif; }.modal-head button { border:0; background:transparent; font-size:22px; }.two-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+@media (max-width:850px) { .sidebar,.mobile-notes { display:none; } #employee { justify-content:center; margin:25px auto; } .dashboard { width:100%; padding:26px 18px; } .metrics { grid-template-columns:repeat(2,1fr); } .dashboard-grid,.admin-grid { grid-template-columns:1fr; } .admin-view { padding:25px 18px; } .admin-table { min-width:460px; } .topbar { padding:0 18px; } }
+@media (max-width:440px) { .topbar { gap:8px; }.brand { font-size:16px; }.avatar { display:none; }.mode { padding:8px 7px; font-size:11px; }.mode-switch { max-width:68vw; }.phone-frame { width:100%; height:calc(100vh - 76px); border:0; border-radius:0; box-shadow:none; }.mobile-content { height:calc(100vh - 124px); } #employee { margin:0; padding:0; }.dash-header { align-items:flex-start; }.dash-header h1 { font-size:23px; }.metrics article { padding:14px; }.candidate-info .skills { display:none; }.review { min-width:84px; }.two-fields { grid-template-columns:1fr; } }

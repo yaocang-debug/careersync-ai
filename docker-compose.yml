@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: careersync
+      POSTGRES_USER: careersync
+      POSTGRES_PASSWORD: change-this-password
+    ports:
+      - "5432:5432"
+    volumes:
+      - careersync-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U careersync -d careersync"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  careersync-postgres:

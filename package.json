@@ -1,0 +1,7 @@
+{
+  "name": "careersync-ai-mvp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dependency-free local CareerSync AI MVP",
+  "scripts": { "start": "node server.js" }
+}

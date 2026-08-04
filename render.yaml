@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: careersync-ai
+    runtime: node
+    plan: starter
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_ENFORCED
+        value: "true"
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_FROM
+        sync: false
+
+databases:
+  - name: careersync-db
+    plan: basic-256mb
+    databaseName: careersync
+    user: careersync
