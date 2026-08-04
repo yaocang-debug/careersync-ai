@@ -58,6 +58,7 @@ document.addEventListener('change', async (event) => {
 const registrationName = $('#register-form [name="name"]');
 if (registrationName && !$('#register-form [name="username"]')) registrationName.closest('label')?.insertAdjacentHTML('afterend', '<label>Username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]+" placeholder="e.g. nur.aisyah" /><small>Use letters, numbers, dots, underscores, or hyphens.</small></label>');
 const employeeNav = document.querySelector('.bottom-nav');
+if ($('#install-app')) { $('#install-app').hidden = false; $('#install-app').textContent = '⇩ Install app'; }
 if (employeeNav && !employeeNav.querySelector('[data-employee-page="offers"]')) employeeNav.insertAdjacentHTML('beforeend', '<button data-employee-page="offers">✦<span>Offers</span></button>');
 const baseEmployerRender = renderEmployer;
 renderEmployer = async function () { await baseEmployerRender(); try { const { notifications } = await api('/api/employer/notifications'); if (notifications?.length && !$('#employer-content .notification-banner')) $('#employer-content .dash-header')?.insertAdjacentHTML('afterend', `<section class="notification-banner employer-alert"><strong>${notifications.length} new update${notifications.length === 1 ? '' : 's'}</strong><span>${escape(notifications[0].title)} — ${escape(notifications[0].body)}</span></section>`); } catch {} };
