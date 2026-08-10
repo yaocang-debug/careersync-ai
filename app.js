@@ -57,7 +57,7 @@ document.addEventListener('change', async (event) => {
 // Add the offer destination without requiring a page reload or a separate app shell.
 const loginForm = $('#login-form');
 if (loginForm && !loginForm.querySelector('[name="role"]')) loginForm.querySelector('[name="identifier"]')?.closest('label')?.insertAdjacentHTML('beforebegin', '<label>Login workspace<select name="role"><option value="employee">Employee app</option><option value="employer">Employer portal</option></select></label>');
-setTimeout(() => { const form = $('#login-form'); if (form && !form.querySelector('[name="role"]')) form.querySelector('[name="identifier"]')?.closest('label')?.insertAdjacentHTML('beforebegin', '<label>Login workspace<select name="role"><option value="employee">Employee app</option><option value="employer">Employer portal</option></select></label>'); }, 100);
+setTimeout(() => { const form = $('#login-form'); if (form && !form.querySelector('[name="role"]')) form.insertAdjacentHTML('afterbegin', '<label>Login workspace<select name="role"><option value="employee">Employee app</option><option value="employer">Employer portal</option></select></label>'); }, 100);
 const registrationName = $('#register-form [name="name"]');
 if (registrationName && !$('#register-form [name="username"]')) registrationName.closest('label')?.insertAdjacentHTML('afterend', '<label>Username<input name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._-]+" placeholder="e.g. nur.aisyah" /><small>Use letters, numbers, dots, underscores, or hyphens.</small></label>');
 const employeeNav = document.querySelector('.bottom-nav');
