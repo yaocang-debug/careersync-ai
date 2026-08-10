@@ -116,7 +116,16 @@ if ($('#account-dialog') && !$('#account-settings')) { $('.account-actions')?.in
 function showAuthGate() {
   if (localStorage.getItem('careersync-session') || $('#auth-gate')) return;
   document.body.classList.add('auth-gate-active'); document.body.insertAdjacentHTML('afterbegin', `<section class="auth-gate" id="auth-gate"><div class="auth-gate-card"><div class="auth-gate-brand"><span class="brand-mark">↗</span> CareerSync <em>AI</em></div><p class="eyebrow">YOUR NEXT MOVE, MADE CLEAR</p><h1>Find work that fits your life.</h1><p class="auth-gate-lead">Discover verified opportunities, prepare with AI, and move from application to interview with confidence.</p><div class="auth-gate-benefits"><span>✦ Skills-first matching</span><span>✓ Verified employers</span><span>◷ Interview reminders</span><span>▣ Offers in one place</span></div><button class="primary auth-gate-login" id="gate-login">Log in securely</button><button class="outline auth-gate-register" id="gate-register">Create an account</button><small class="auth-gate-note">Choose Employee app or Employer portal during login. Your workspace stays private and protected.</small></div></section>`); $('#gate-login').onclick = () => $('#login-dialog').showModal(); $('#gate-register').onclick = () => $('#register-dialog').showModal(); }
-showAuthGate();
+async function validateStoredSession() {
+  if (!localStorage.getItem('careersync-session')) return showAuthGate();
+  try { await api('/api/auth/session'); }
+  catch {
+    localStorage.removeItem('careersync-user'); localStorage.removeItem('careersync-session'); localStorage.removeItem('careersync-session-expires');
+    document.querySelectorAll('.mode').forEach((button) => { button.hidden = false; });
+    showAuthGate();
+  }
+}
+validateStoredSession();
 const originalCloseAuthGate = closeAuthGate;
 const priorFinishLogin = finishLogin;
 finishLogin = (result) => { priorFinishLogin(result); originalCloseAuthGate(); };
