@@ -125,7 +125,17 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     if (!url.pathname.startsWith('/api/')) return serveFile(req, res);
     const store = readStore();
-    if (req.method === 'GET' && url.pathname === '/api/me') return json(res, 200, { employee, employer, admin });
+    if (req.method === 'GET' && url.pathname === '/api/me') {
+      const session = sessionFrom(req);
+      if (!session) return json(res, 401, { error: 'Please log in to continue.' });
+      const account = (store.users || []).find((item) => item.id === session.userId);
+      if (!account) return json(res, 401, { error: 'Your session is no longer valid. Please log in again.' });
+      const safe = publicUser(account);
+      const payload = { user: safe, role: account.role };
+      if (account.role === 'employee') payload.employee = { ...employee, ...safe, title: safe.title || employee.title, skills: safe.profile?.skills || employee.skills, location: safe.profile?.region || employee.location };
+      if (account.role === 'employer_admin') payload.employer = { ...employer, ...safe, companyId: account.companyId || employer.companyId };
+      return json(res, 200, payload);
+    }
     if (req.method === 'POST' && url.pathname === '/api/auth/register') {
       const input = await body(req); const role = input.role === 'employer' ? 'employer_admin' : 'employee';
       if (!input.name?.trim() || !input.email?.trim() || !input.password || input.password.length < 6) return json(res, 400, { error: 'Name, email, and a password of at least 6 characters are required.' });
