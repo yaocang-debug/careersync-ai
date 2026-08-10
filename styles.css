@@ -23,6 +23,9 @@ h1,h2,h3,p { margin-top:0; }
 
 /* Employee app */
 #employee { max-width:1000px; align-items:center; gap:110px; margin:54px auto; padding:0 20px; }
+body:not(.native-app) #employee { max-width:1220px; align-items:stretch; gap:54px; }
+body:not(.native-app) #employee .phone-frame { width:min(680px,100%); height:auto; min-height:680px; border-width:6px; border-radius:28px; }
+body:not(.native-app) #employee .mobile-content { height:auto; min-height:620px; }
 .phone-frame { position:relative; width:390px; height:760px; overflow:hidden; border:10px solid #20343a; border-radius:42px; background:var(--white); box-shadow:0 24px 60px #33554c35; }
 .mobile-header { height:38px; display:flex; justify-content:space-between; padding:12px 20px 0; font-size:11px; font-weight:700; }
 .mobile-content { height:712px; overflow:auto; padding:9px 20px 90px; }
@@ -73,3 +76,5 @@ h1,h2,h3,p { margin-top:0; }
 
 @media (max-width:850px) { .sidebar,.mobile-notes { display:none; } #employee { justify-content:center; margin:25px auto; } .dashboard { width:100%; padding:26px 18px; } .metrics { grid-template-columns:repeat(2,1fr); } .dashboard-grid,.admin-grid { grid-template-columns:1fr; } .admin-view { padding:25px 18px; } .admin-table { min-width:460px; } .topbar { padding:0 18px; } }
 @media (max-width:440px) { .topbar { gap:8px; }.brand { font-size:16px; }.avatar { display:none; }.mode { padding:8px 7px; font-size:11px; }.mode-switch { max-width:68vw; }.phone-frame { width:100%; height:calc(100vh - 76px); border:0; border-radius:0; box-shadow:none; }.mobile-content { height:calc(100vh - 124px); } #employee { margin:0; padding:0; }.dash-header { align-items:flex-start; }.dash-header h1 { font-size:23px; }.metrics article { padding:14px; }.candidate-info .skills { display:none; }.review { min-width:84px; }.two-fields { grid-template-columns:1fr; } }
+.notification-centre { border: 0; background: #eef4ef; color: #214c43; border-radius: 999px; padding: .65rem .8rem; cursor: pointer; font-weight: 700; }
+.notification-centre:hover { background: #dff0e6; transform: translateY(-1px); }

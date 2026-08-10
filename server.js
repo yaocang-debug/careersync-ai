@@ -93,13 +93,18 @@ async function deliverVerificationCode(user, channel, code) {
 function ensureOffer(store, application) { store.offers ??= []; let offer = store.offers.find((item) => item.applicationId === application.id && ['sent', 'accepted'].includes(item.status)); if (!offer) { const job = store.jobs.find((item) => item.id === application.jobId); offer = { id: id('offer'), applicationId: application.id, title: job?.title || 'CareerSync offer', salary: job?.salary || 'To be discussed', payFrequency: job?.paymentFrequency || 'Monthly', benefits: [], startDate: null, probationMonths: null, workHoursPerDay: job?.workHoursPerDay || 8, expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(), status: 'sent', createdAt: new Date().toISOString() }; store.offers.push(offer); } return offer; }
 function issueSession(user) { const token = crypto.randomBytes(32).toString('hex'); sessions.set(token, { userId: user.id, role: user.role, companyId: user.companyId || null, expiresAt: Date.now() + 8 * 60 * 60 * 1000 }); return { token, expiresAt: sessions.get(token).expiresAt }; }
 function sessionFrom(req) { const header = req.headers.authorization || ''; const token = header.startsWith('Bearer ') ? header.slice(7) : ''; const session = sessions.get(token); if (!session) return null; if (session.expiresAt <= Date.now()) { sessions.delete(token); return null; } return { ...session, token }; }
-function requireRole(req, res, roles) { const session = sessionFrom(req); if (process.env.AUTH_ENFORCED !== 'true') return session || { userId: 'local-demo', role: 'platform_admin' }; if (!session || !roles.includes(session.role)) { json(res, 401, { error: 'Authentication required.' }); return null; } return session; }
-function match(job) {
+function requireRole(req, res, roles) { const session = sessionFrom(req); if (process.env.AUTH_ENFORCED !== 'true') return session || { userId: 'local-demo', role: roles[0] }; if (!session || !roles.includes(session.role)) { json(res, 403, { error: `This area is restricted to ${roles.join(' or ')} accounts.` }); return null; } return session; }
+function requestedRoleMatches(user, requestedRole) { if (!requestedRole) return true; const requested = requestedRole === 'employer' ? 'employer_admin' : requestedRole; return user?.role === requested; }
+function sessionUser(req, store) { const session = sessionFrom(req); return (store.users || []).find((item) => item.id === session?.userId) || employee; }
+function match(job, candidate = employee) {
   const required = job.requiredSkills || [];
-  const common = required.filter((skill) => employee.skills.map((s) => s.toLowerCase()).includes(skill.toLowerCase()));
+  const skills = candidate.skills || candidate.profile?.skills || employee.skills;
+  const preferences = candidate.preferences || { workMode: ['Hybrid', 'Remote'] };
+  const location = candidate.location || candidate.profile?.region || employee.location;
+  const common = required.filter((skill) => skills.map((s) => s.toLowerCase()).includes(skill.toLowerCase()));
   const skillScore = required.length ? common.length / required.length : 0.6;
-  const modeScore = employee.preferences.workMode.includes(job.workMode) ? 1 : 0.45;
-  const locationScore = job.location === employee.location || job.workMode === 'Remote' ? 1 : 0.55;
+  const modeScore = preferences.workMode.includes(job.workMode) ? 1 : 0.45;
+  const locationScore = job.location === location || job.workMode === 'Remote' ? 1 : 0.55;
   const score = Math.round((skillScore * .65 + modeScore * .2 + locationScore * .15) * 100);
   return { score, factors: [
     `${common.length} of ${required.length || 0} required skills match`,
@@ -140,18 +145,18 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/login/password') {
       if (rateLimited(requestKey(req, 'login-password'), 20, 15 * 60 * 1000)) return json(res, 429, { error: 'Too many login attempts. Try again later.' });
-      const input = await body(req); if (locked(input.identifier)) return json(res, 423, { error: 'This account is temporarily locked after too many failed attempts.' }); const user = findUserByIdentifier(store, input.identifier); const hash = crypto.createHash('sha256').update(String(input.password || '')).digest('hex');
+      const input = await body(req); if (locked(input.identifier)) return json(res, 423, { error: 'This account is temporarily locked after too many failed attempts.' }); const user = findUserByIdentifier(store, input.identifier); if (!requestedRoleMatches(user, input.role)) return json(res, 403, { error: `This is a ${user?.role === 'employer_admin' ? 'employer' : 'employee'} account. Choose the matching login workspace.` }); const hash = crypto.createHash('sha256').update(String(input.password || '')).digest('hex');
       if (!user || hash !== user.passwordHash) { recordLoginFailure(input.identifier); return json(res, 401, { error: 'Incorrect login details.' }); }
       clearLoginFailures(input.identifier);
       audit(store, user.id, 'auth.login', 'user', user.id, 'Password login'); writeStore(store); return json(res, 200, { user: publicUser(user), session: issueSession(user), message: 'Login successful.' });
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/login/request') {
       if (rateLimited(requestKey(req, 'login-code'), 5, 15 * 60 * 1000)) return json(res, 429, { error: 'Too many code requests. Try again later.' });
-      const input = await body(req); if (!String(input.identifier || '').trim()) return json(res, 400, { error: `Enter your registered ${input.channel === 'sms' ? 'phone number' : 'email'} before requesting a code.` }); const user = findUserByIdentifier(store, input.identifier); if (!user) return json(res, 404, { error: 'No registered account matches that email, phone number, name, or username.' });
+      const input = await body(req); if (!String(input.identifier || '').trim()) return json(res, 400, { error: `Enter your registered ${input.channel === 'sms' ? 'phone number' : 'email'} before requesting a code.` }); const user = findUserByIdentifier(store, input.identifier); if (!user) return json(res, 404, { error: 'No registered account matches that email, phone number, name, or username.' }); if (!requestedRoleMatches(user, input.role)) return json(res, 403, { error: `This is a ${user.role === 'employer_admin' ? 'employer' : 'employee'} account. Choose the matching login workspace.` });
       const code = String(Math.floor(100000 + Math.random() * 900000)); user.loginCodeHash = crypto.createHash('sha256').update(code).digest('hex'); user.loginCodeExpiresAt = Date.now() + 600000; user.loginCodeChannel = input.channel || 'email'; const delivery = await deliverVerificationCode(user, user.loginCodeChannel, code); writeStore(store); return json(res, 200, { message: delivery.sent ? `Verification code sent by ${user.loginCodeChannel === 'sms' ? 'SMS' : 'email'}.` : `Code created, but ${user.loginCodeChannel === 'sms' ? 'SMS' : 'email'} delivery is not configured on this server.`, delivery, devCode: delivery.sent ? undefined : code });
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/login/verify') {
-      const input = await body(req); const user = findUserByIdentifier(store, input.identifier); const hash = crypto.createHash('sha256').update(String(input.code || '')).digest('hex');
+      const input = await body(req); const user = findUserByIdentifier(store, input.identifier); if (!requestedRoleMatches(user, input.role)) return json(res, 403, { error: 'The verification code belongs to a different workspace.' }); const hash = crypto.createHash('sha256').update(String(input.code || '')).digest('hex');
       if (!user || !user.loginCodeHash || user.loginCodeExpiresAt < Date.now() || hash !== user.loginCodeHash) return json(res, 400, { error: 'Invalid or expired verification code.' });
       delete user.loginCodeHash; delete user.loginCodeExpiresAt; delete user.loginCodeChannel; audit(store, user.id, 'auth.login', 'user', user.id, 'Verification-code login'); writeStore(store); return json(res, 200, { user: publicUser(user), session: issueSession(user), message: 'Login successful.' });
     }
@@ -177,7 +182,7 @@ const server = http.createServer(async (req, res) => {
       const input = await body(req); const user = findUserByIdentifier(store, input.identifier); if (!user) return json(res, 404, { error: 'No registered account matches that email or phone number.' });
       if (input.channel === 'email' && !user.email) return json(res, 400, { error: 'This account has no registered email address.' });
       if (input.channel === 'sms' && !user.profile?.phone) return json(res, 400, { error: 'This account has no registered phone number.' });
-      const code = String(Math.floor(100000 + Math.random() * 900000)); user.passwordResetCodeHash = crypto.createHash('sha256').update(code).digest('hex'); user.passwordResetExpiresAt = Date.now() + 600000; user.passwordResetChannel = input.channel; writeStore(store); return json(res, 200, { message: `Verification code prepared for ${input.channel === 'sms' ? 'SMS' : 'email'}.`, devCode: code });
+      const code = String(Math.floor(100000 + Math.random() * 900000)); user.passwordResetCodeHash = crypto.createHash('sha256').update(code).digest('hex'); user.passwordResetExpiresAt = Date.now() + 600000; user.passwordResetChannel = input.channel; const delivery = await deliverVerificationCode(user, input.channel, code); writeStore(store); return json(res, 200, { message: delivery.sent ? `Password-reset code sent by ${input.channel === 'sms' ? 'SMS' : 'email'}.` : `Reset code created, but ${input.channel === 'sms' ? 'SMS' : 'email'} delivery is not configured on this server.`, delivery, devCode: delivery.sent ? undefined : code });
     }
     if (req.method === 'POST' && url.pathname === '/api/auth/password-reset/confirm') {
       const input = await body(req); const user = findUserByIdentifier(store, input.identifier); const hash = crypto.createHash('sha256').update(String(input.code || '')).digest('hex');
@@ -186,51 +191,61 @@ const server = http.createServer(async (req, res) => {
       user.passwordHash = crypto.createHash('sha256').update(input.newPassword).digest('hex'); delete user.passwordResetCodeHash; delete user.passwordResetExpiresAt; delete user.passwordResetChannel; audit(store, user.id, 'security.password_reset', 'user', user.id, 'Password reset completed'); writeStore(store); return json(res, 200, { message: 'Password reset successfully. You can now sign in.' });
     }
     if (req.method === 'GET' && url.pathname === '/api/jobs') {
-      const applied = new Set(store.applications.filter((a) => a.employeeId === employee.id).map((a) => a.jobId));
-      const jobs = store.jobs.filter((j) => j.status === 'published').map((job) => ({ ...job, ...match(job), applied: applied.has(job.id) })).sort((a, b) => b.score - a.score);
+      if (!requireRole(req, res, ['employee'])) return;
+      const candidate = sessionUser(req, store);
+      const applied = new Set(store.applications.filter((a) => a.employeeId === candidate.id).map((a) => a.jobId));
+      const jobs = store.jobs.filter((j) => j.status === 'published').map((job) => ({ ...job, ...match(job, candidate), applied: applied.has(job.id) })).sort((a, b) => b.score - a.score);
       return json(res, 200, { jobs });
     }
     if (req.method === 'POST' && /^\/api\/jobs\/[^/]+\/apply$/.test(url.pathname)) {
+      if (!requireRole(req, res, ['employee'])) return;
+      const candidate = sessionUser(req, store);
       const jobId = url.pathname.split('/')[3];
       if (!store.jobs.some((job) => job.id === jobId && job.status === 'published')) return json(res, 404, { error: 'Job not found' });
       if (store.applications.some((application) => application.jobId === jobId && application.employeeId === employee.id)) return json(res, 409, { error: 'You already applied for this role.' });
-      const application = { id: id('app'), jobId, employeeId: employee.id, status: 'submitted', submittedAt: new Date().toISOString() };
-      store.applications.push(application); notify(store, employer.id, 'application', 'New application received', `Aisha applied for ${store.jobs.find((item) => item.id === jobId)?.title || 'your job'}.`, '/?view=employer&section=candidates', `application:${application.id}`); audit(store, employee.id, 'application.submitted', 'application', application.id, `Applied to ${jobId}`); writeStore(store); return json(res, 201, { application });
+      const application = { id: id('app'), jobId, employeeId: candidate.id, status: 'submitted', submittedAt: new Date().toISOString() };
+      store.applications.push(application); notify(store, employer.id, 'application', 'New application received', `${candidate.name} applied for ${store.jobs.find((item) => item.id === jobId)?.title || 'your job'}.`, '/?view=employer&section=candidates', `application:${application.id}`); audit(store, candidate.id, 'application.submitted', 'application', application.id, `Applied to ${jobId}`); writeStore(store); return json(res, 201, { application });
     }
     if (req.method === 'GET' && url.pathname === '/api/my-applications') {
-      return json(res, 200, { applications: store.applications.filter((a) => a.employeeId === employee.id).map((a) => ({ ...a, cancellable: ['submitted', 'reviewing', 'shortlisted'].includes(a.status), job: store.jobs.find((j) => j.id === a.jobId), interview: (store.interviews || []).find((i) => i.applicationId === a.id), offer: (store.offers || []).find((i) => i.applicationId === a.id && ['sent', 'accepted', 'declined'].includes(i.status)) })) });
+      if (!requireRole(req, res, ['employee'])) return;
+      const candidate = sessionUser(req, store); return json(res, 200, { applications: store.applications.filter((a) => a.employeeId === candidate.id).map((a) => ({ ...a, cancellable: ['submitted', 'reviewing', 'shortlisted'].includes(a.status), job: store.jobs.find((j) => j.id === a.jobId), interview: (store.interviews || []).find((i) => i.applicationId === a.id), offer: (store.offers || []).find((i) => i.applicationId === a.id && ['sent', 'accepted', 'declined'].includes(i.status)) })) });
     }
-    if (req.method === 'GET' && url.pathname === '/api/my-notifications') return json(res, 200, { notifications: (store.notifications || []).filter((item) => item.recipientId === employee.id) });
-    if (req.method === 'GET' && url.pathname === '/api/my-offers') return json(res, 200, { offers: (store.offers || []).filter((item) => { const app = store.applications.find((a) => a.id === item.applicationId); return app?.employeeId === employee.id; }).map((item) => ({ ...item, job: store.jobs.find((job) => job.id === store.applications.find((a) => a.id === item.applicationId)?.jobId) })) });
+    if (req.method === 'GET' && url.pathname === '/api/my-notifications') { if (!requireRole(req, res, ['employee'])) return; const candidate = sessionUser(req, store); return json(res, 200, { notifications: (store.notifications || []).filter((item) => item.recipientId === candidate.id) }); }
+    if (req.method === 'GET' && url.pathname === '/api/my-offers') { if (!requireRole(req, res, ['employee'])) return; const candidate = sessionUser(req, store); return json(res, 200, { offers: (store.offers || []).filter((item) => { const app = store.applications.find((a) => a.id === item.applicationId); return app?.employeeId === candidate.id; }).map((item) => ({ ...item, job: store.jobs.find((job) => job.id === store.applications.find((a) => a.id === item.applicationId)?.jobId) })) }); }
     if (req.method === 'PATCH' && /^\/api\/applications\/[^/]+\/cancel$/.test(url.pathname)) {
-      const application = store.applications.find((a) => a.id === url.pathname.split('/')[3] && a.employeeId === employee.id);
+      if (!requireRole(req, res, ['employee'])) return;
+      const candidate = sessionUser(req, store); const application = store.applications.find((a) => a.id === url.pathname.split('/')[3] && a.employeeId === candidate.id);
       if (!application) return json(res, 404, { error: 'Application not found.' });
       if (!['submitted', 'reviewing', 'shortlisted'].includes(application.status)) return json(res, 409, { error: 'This application can no longer be cancelled because the employer has moved it to the interview or offer stage.' });
       application.status = 'withdrawn'; application.updatedAt = new Date().toISOString(); audit(store, employee.id, 'application.withdrawn', 'application', application.id, 'Cancelled by employee'); writeStore(store); return json(res, 200, { application });
     }
-    if (req.method === 'GET' && url.pathname === '/api/employee/reminders') return json(res, 200, { reminders: remindersFor(store, 'employee') });
+    if (req.method === 'GET' && url.pathname === '/api/employee/reminders') { if (!requireRole(req, res, ['employee'])) return; return json(res, 200, { reminders: remindersFor(store, 'employee') }); }
     if (req.method === 'GET' && url.pathname === '/api/employer/dashboard') {
+      if (!requireRole(req, res, ['employer_admin', 'recruiter'])) return;
       const jobs = store.jobs.filter((job) => job.companyId === employer.companyId);
       const applications = store.applications.filter((application) => jobs.some((job) => job.id === application.jobId));
       const candidates = applications.map((application) => ({ ...application, candidate: employee, job: jobs.find((job) => job.id === application.jobId), ...match(jobs.find((job) => job.id === application.jobId)) })).sort((a, b) => b.score - a.score);
  return json(res, 200, { company: store.companies.find((company) => company.id === employer.companyId), jobs, candidates, interviews: (store.interviews || []).filter((i) => applications.some((a) => a.id === i.applicationId)), reminders: remindersFor(store, 'employer'), notifications: (store.notifications || []).filter((item) => item.recipientId === employer.id), metrics: { activeJobs: jobs.filter((j) => j.status === 'published').length, applicants: applications.length, responseDays: 2.8 } });
     }
     if (req.method === 'POST' && url.pathname === '/api/employer/jobs') {
+      if (!requireRole(req, res, ['employer_admin', 'recruiter'])) return;
       const input = await body(req);
       if (!input.title?.trim() || !input.description?.trim() || !input.requiredSkills?.length) return json(res, 400, { error: 'Title, description, and at least one required skill are required.' });
       const job = { id: id('job'), companyId: employer.companyId, title: input.title.trim(), description: input.description.trim(), category: categories.includes(input.category) ? input.category : 'Other', location: input.location?.trim() || 'Kuala Lumpur', workMode: input.workMode || 'Hybrid', salary: input.salary?.trim() || 'Salary not disclosed', paymentFrequency: input.paymentFrequency || 'Monthly', employmentType: input.employmentType || 'Permanent', workHoursPerDay: Number(input.workHoursPerDay) || 8, offDays: input.offDays?.trim() || 'Saturday and Sunday', minPay: input.minPay?.trim() || '', maxPay: input.maxPay?.trim() || '', paymentMethod: input.paymentMethod || 'Bank transfer', requiredSkills: input.requiredSkills.map((s) => s.trim()).filter(Boolean), status: 'published', createdAt: new Date().toISOString() };
       store.jobs.push(job); audit(store, employer.id, 'job.published', 'job', job.id, job.title); writeStore(store); return json(res, 201, { job });
     }
     if (req.method === 'PATCH' && /^\/api\/employer\/applications\/[^/]+$/.test(url.pathname)) {
+      if (!requireRole(req, res, ['employer_admin', 'recruiter'])) return;
       const input = await body(req); const application = store.applications.find((a) => a.id === url.pathname.split('/').pop());
       const allowed = ['submitted', 'reviewing', 'shortlisted', 'interviewing', 'offered', 'hired', 'rejected'];
       if (!application) return json(res, 404, { error: 'Application not found' });
       if (!allowed.includes(input.status)) return json(res, 400, { error: 'Invalid status' });
       application.status = input.status; application.updatedAt = new Date().toISOString(); if (input.status === 'shortlisted' || input.status === 'offered') { const offer = ensureOffer(store, application); notify(store, employee.id, 'offer', 'Your offer letter is ready', `Northstar Labs shortlisted you for ${store.jobs.find((item) => item.id === application.jobId)?.title || 'the role'}.`, '/?view=employee&section=offers', `offer:${offer.id}`); notify(store, employer.id, 'offer', 'Offer letter issued', 'The employee has been notified that their offer is ready.', '/?view=employer&section=candidates', `offer-employer:${offer.id}`); } if (input.status === 'interviewing') notify(store, employee.id, 'interview', 'Interview stage updated', 'Your application has moved to the interview stage.', '/?view=employee&section=interviews', `interview-stage:${application.id}`); audit(store, employer.id, 'application.status_updated', 'application', application.id, input.status); writeStore(store); return json(res, 200, { application });
     }
-    if (req.method === 'GET' && url.pathname === '/api/employer/notifications') return json(res, 200, { notifications: (store.notifications || []).filter((item) => item.recipientId === employer.id) });
-    if (req.method === 'PATCH' && /^\/api\/offers\/[^/]+\/respond$/.test(url.pathname)) { const input = await body(req); const offer = (store.offers || []).find((item) => item.id === url.pathname.split('/')[3]); const application = offer && store.applications.find((item) => item.id === offer.applicationId && item.employeeId === employee.id); if (!offer || !application) return json(res, 404, { error: 'Offer not found.' }); if (!['accepted', 'declined'].includes(input.status)) return json(res, 400, { error: 'Invalid offer response.' }); offer.status = input.status; offer.respondedAt = new Date().toISOString(); application.status = input.status === 'accepted' ? 'hired' : 'rejected'; notify(store, employer.id, 'offer', `Offer ${input.status}`, `The employee has ${input.status} the offer.`, '/?view=employer&section=candidates', `offer-response:${offer.id}`); audit(store, employee.id, 'offer.responded', 'offer', offer.id, input.status); writeStore(store); return json(res, 200, { offer, application }); }
+    if (req.method === 'GET' && url.pathname === '/api/employer/notifications') { if (!requireRole(req, res, ['employer_admin', 'recruiter'])) return; return json(res, 200, { notifications: (store.notifications || []).filter((item) => item.recipientId === employer.id) }); }
+    if (req.method === 'PATCH' && /^\/api\/offers\/[^/]+\/respond$/.test(url.pathname)) { if (!requireRole(req, res, ['employee'])) return; const candidate = sessionUser(req, store); const input = await body(req); const offer = (store.offers || []).find((item) => item.id === url.pathname.split('/')[3]); const application = offer && store.applications.find((item) => item.id === offer.applicationId && item.employeeId === candidate.id); if (!offer || !application) return json(res, 404, { error: 'Offer not found.' }); if (!['accepted', 'declined'].includes(input.status)) return json(res, 400, { error: 'Invalid offer response.' }); offer.status = input.status; offer.respondedAt = new Date().toISOString(); application.status = input.status === 'accepted' ? 'hired' : 'rejected'; notify(store, employer.id, 'offer', `Offer ${input.status}`, `${candidate.name} has ${input.status} the offer.`, '/?view=employer&section=candidates', `offer-response:${offer.id}`); audit(store, candidate.id, 'offer.responded', 'offer', offer.id, input.status); writeStore(store); return json(res, 200, { offer, application }); }
     if (req.method === 'POST' && url.pathname === '/api/employer/interviews') {
+      if (!requireRole(req, res, ['employer_admin', 'recruiter'])) return;
       const input = await body(req); const application = store.applications.find((a) => a.id === input.applicationId);
       if (!application) return json(res, 404, { error: 'Application not found' });
       if (!input.scheduledAt || !input.timezone || !input.interviewMode) return json(res, 400, { error: 'Date, time zone, and interview format are required.' });
